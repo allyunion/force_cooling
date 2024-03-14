@@ -61,3 +61,6 @@ if temperature_fahrenheit > temperature_threshold and not ac_state['on']:
     # Turn on the Sensibo AC
     client.pod_change_ac_state(sensibo_device_id, ac_state, "on", True)
     print("Sensibo AC turned on.")
+else:
+    print(f"Temperature in Fahrenheit: {temperature_fahrenheit} °F")
+    print(f"Sensibo AC Status: {ac_state['on']}")
