@@ -1,16 +1,25 @@
-# Load configuration from config.ini
-config = configparser.ConfigParser()
-config.read('config.ini')
-
-import requests
-import json
-import uuid
 import configparser
+import json
+import logging
+import os
+import requests
+import uuid
+
+from datetime import datetime
+
 import sensibo_client
 
+# Configure the logger
+logging.basicConfig(format='%(asctime)s [%(levelname)s] %(message)s', datefmt='%d/%b/%Y:%H:%M:%S', level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Get the directory of the script
+script_dir = os.path.dirname(os.path.abspath(__file__))
+config_path = os.path.join(script_dir, 'config.ini')
+
 # Load configuration from config.ini
 config = configparser.ConfigParser()
-config.read('config.ini')
+config.read(config_path)
 
 # Govee settings
 govee_api_key = config.get('Govee', 'api_key')
@@ -45,13 +54,12 @@ temperature_raw = response_data['payload']['capabilities'][1]['state']['value']
 
 temperature_celsius = temperature_raw / 100  # Convert to degrees Celsius
 temperature_fahrenheit = (temperature_celsius * 9/5) + 32  # Convert to Fahrenheit
-#print(f"Temperature in Fahrenheit: {temperature_fahrenheit} °F")
 
 client = sensibo_client.SensiboClientAPI(sensibo_api_key)
 devices = client.devices()
 
 if sensibo_device_name not in devices:
-    print(f"Device '{sensibo_device_name}' not found.")
+    logger.error(f"Device '{sensibo_device_name}' not found.")
     exit(1)
 
 sensibo_device_id = devices[sensibo_device_name]
@@ -60,7 +68,7 @@ ac_state = client.pod_ac_state(sensibo_device_id)
 if temperature_fahrenheit > temperature_threshold and not ac_state['on']:
     # Turn on the Sensibo AC
     client.pod_change_ac_state(sensibo_device_id, ac_state, "on", True)
-    print("Sensibo AC turned on.")
+    logger.info("Sensibo AC turned on.")
 else:
-    print(f"Temperature in Fahrenheit: {temperature_fahrenheit} °F")
-    print(f"Sensibo AC Status: {ac_state['on']}")
+    logger.info(f"Temperature in Fahrenheit: {temperature_fahrenheit} °F")
+    logger.info(f"Sensibo AC Status: {ac_state['on']}")
